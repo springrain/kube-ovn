@@ -37,8 +37,6 @@ func setupLeaderElection(config *leaderElectionConfig) *leaderelection.LeaderEle
 	// start a new context
 	ctx := context.Background()
 
-	var cancelContext context.CancelFunc
-
 	var newLeaderCtx = func(ctx context.Context) context.CancelFunc {
 		// allow to cancel the context in case we stop being the leader
 		leaderCtx, cancel := context.WithCancel(ctx)
@@ -57,17 +55,7 @@ func setupLeaderElection(config *leaderElectionConfig) *leaderelection.LeaderEle
 			}
 		},
 		OnStoppedLeading: func() {
-			klog.Info("I am not leader anymore")
-			close(stopCh)
-
-			// cancel the context
-			cancelContext()
-
-			cancelContext = newLeaderCtx(ctx)
-
-			if config.OnStoppedLeading != nil {
-				config.OnStoppedLeading()
-			}
+			klog.Fatalf("leaderelection lost")
 		},
 		OnNewLeader: func(identity string) {
 			klog.Infof("new leader elected: %v", identity)
